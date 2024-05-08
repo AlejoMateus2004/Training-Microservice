@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: training-microservice
+  profiles:
+    active: prod
+  mvc:
+    pathmatch:
+      matching-strategy: ANT_PATH_MATCHER
+#  cloud:
+#    config:
+#      enabled: false
+management:
+  server:
+    port: 9003
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  info:
+    env:
+      enabled: true
+  endpoint:
+    health:
+      show-details: ALWAYS
+#      base-path: "/manage"
+
+springdoc:
+  swagger-ui:
+    enabled: true
+  show-actuator: true
