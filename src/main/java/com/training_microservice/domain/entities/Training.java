@@ -1,8 +1,8 @@
 package com.training_microservice.domain.entities;
 
+import jakarta.persistence.*;
 import lombok.Data;
 
-import javax.persistence.*;
 import java.io.Serializable;
 import java.time.LocalDate;
 
@@ -13,7 +13,7 @@ public class Training implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "Id", nullable = false)
-    private Long Id;
+    private Long id;
 
     @Column(name = "traineeUsername", nullable = false)
     private String traineeUsername;
@@ -32,4 +32,14 @@ public class Training implements Serializable {
 
     @Column(name = "trainingDuration", nullable = false)
     private Long trainingDuration;
+
+    @Column(name = "trainingIsCompleted", nullable = false)
+    private Boolean trainingIsCompleted;
+
+    @PrePersist
+    protected void onCreate() {
+        if (this.trainingIsCompleted == null) {
+            this.trainingIsCompleted = false;
+        }
+    }
 }

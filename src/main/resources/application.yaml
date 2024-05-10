@@ -1,17 +1,41 @@
+#spring:
+#  application:
+#    name: training-microservice
+#  config:
+#    import: configserver:http://localhost:8888
+#    name: training-microservice
+#    activate:
+#      on-profile: default, dev
+
+
+server:
+  port: ${PORT:${SERVER_PORT:8083}}
 spring:
   application:
     name: training-microservice
   profiles:
-    active: prod
-  mvc:
-    pathmatch:
-      matching-strategy: ANT_PATH_MATCHER
-#  cloud:
-#    config:
-#      enabled: false
+    active: dev
+  #  mvc:
+  #    pathmatch:
+  #      matching-strategy: ANT_PATH_MATCHER
+
+  cloud:
+    config:
+      enabled: false
+    compatibility-verifier:
+      enabled: false
+eureka:
+  client:
+    fetch-registry: true
+    register-with-eureka: true
+    serviceUrl:
+      defaultZone: ${EUREKA_URI:http://localhost:8761/eureka}
+  instance:
+#    instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
+    hostname: localhost
+
+
 management:
-  server:
-    port: 9003
   endpoints:
     web:
       exposure:
@@ -25,6 +49,12 @@ management:
 #      base-path: "/manage"
 
 springdoc:
+  api-docs:
+    enabled: 'true'
+    path: /api-docs
   swagger-ui:
-    enabled: true
+    enabled: 'true'
+    path: /swagger-ui-custom.html
+
   show-actuator: true
+

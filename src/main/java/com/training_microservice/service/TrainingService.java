@@ -11,7 +11,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.Month;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +44,29 @@ public class TrainingService {
         }
     }
 
+    @Transactional
+    public ResponseEntity updateTrainingStatusToCompleted(Long trainingId) {
+        try {
+            Training training = trainingRepository.findById(trainingId).orElse(null);
+            assert training != null;
+            if (training.getTrainingIsCompleted()) {
+                return ResponseEntity.ok().build();
+            }
+            training.setTrainingIsCompleted(true);
+            Training updatedTraining = trainingRepository.save(training);
+            if (updatedTraining != null) {
+                log.info("Training status updated: {}", updatedTraining.getTrainingName());
+                return ResponseEntity.ok().build();
+            } else {
+                log.error("Failed to update training status");
+            }
+            return ResponseEntity.badRequest().build();
+        } catch (Exception e) {
+            log.error("Error, updating Training Status", e);
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
     @Transactional(readOnly = true)
     public ResponseEntity<TrainingRecord.TrainerTrainingSummary> getTrainingSummaryByTrainer(String trainerUsername) {
         try {
@@ -57,6 +82,9 @@ public class TrainingService {
 
             // Iterate over each training
             for (Training training : trainings) {
+                if (!training.getTrainingIsCompleted()) {
+                   continue; 
+                }
                 // Get year, month, and duration from the training
                 int year = training.getTrainingDate().getYear();
                 String month = Month.of(training.getTrainingDate().getMonthValue()).toString();
@@ -85,15 +113,60 @@ public class TrainingService {
     }
 
     @Transactional
-    public ResponseEntity<String> deleteTrainingByTrainerUsername(String trainerUsername) {
+    public ResponseEntity<Void> deleteTrainingById(Long IdTraining) {
         try {
-            trainingRepository.deleteTrainingByTrainerUsername(trainerUsername);
-            return ResponseEntity.ok().body("Training Deleted");
+            Training training =  trainingRepository.findById(IdTraining).orElse(null);
+            assert training != null;
+            boolean isCompleted = training.getTrainingIsCompleted();
+            if (!isCompleted) {
+                trainingRepository.deleteTrainingById(IdTraining);
+                log.info("Training deleted: {}", IdTraining);
+                return ResponseEntity.ok().build();
+            }
+            log.info("Training is completed, can't be deleted: {}", IdTraining);
+            return ResponseEntity.badRequest().build();
         }catch (Exception e){
-            log.error("Error occurred while deleting training: {}", trainerUsername, e);
+            log.error("Error occurred while deleting training: {}", IdTraining, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<TrainingRecord.TrainerTrainingResponse>> getTrainerTrainingListByTrainingParams(TrainingRecord.TrainingParamsRequest trainingParams){
+        String trainerUsername = trainingParams.trainerUsername();
+        LocalDate periodFrom = trainingParams.periodFrom();
+        LocalDate periodTo = trainingParams.periodTo();
+        String traineeUsername = trainingParams.traineeUsername();
+
+        List<Training> trainings = trainingRepository.findTrainingByTrainerUsernameAndTrainingParams(trainerUsername, periodFrom, periodTo, traineeUsername);
+        if (trainings == null || trainings.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        List<TrainingRecord.TrainerTrainingResponse> list = new ArrayList<>();
+        for (Training training : trainings) {
+            list.add(trainingMapper.trainingToTrainerTrainingResponse(training));
+        }
+
+        return new ResponseEntity<>(list, HttpStatus.OK);
+    }
+
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<TrainingRecord.TraineeTrainingResponse>> getTraineeTrainingListByTrainingParams(TrainingRecord.TrainingParamsRequest trainingParams){
+        String traineeUsername = trainingParams.traineeUsername();
+        String trainerUsername = trainingParams.trainerUsername();
+        LocalDate periodFrom = trainingParams.periodFrom();
+        LocalDate periodTo = trainingParams.periodTo();
+
+        List<Training> trainings = trainingRepository.findTrainingByTraineeUsernameAndTrainingParams(traineeUsername, periodFrom, periodTo, trainerUsername);
+        if (trainings == null || trainings.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        List<TrainingRecord.TraineeTrainingResponse> list = new ArrayList<>();
+        for (Training training : trainings) {
+            list.add(trainingMapper.trainingToTraineeTrainingResponse(training));
+        }
+
+        return new ResponseEntity<>(list, HttpStatus.OK);
+    }
 
 }

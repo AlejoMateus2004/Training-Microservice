@@ -3,12 +3,18 @@ package com.training_microservice.dao.inmemory;
 import com.training_microservice.dao.TrainingRepo;
 import com.training_microservice.domain.entities.Training;
 
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class TrainingStorageInMemory implements TrainingRepo {
 
-    private static Map<Long, Training> trainingMap = new HashMap<>();
+    private static final Map<Long, Training> trainingMap = new HashMap<>();
+
+    @Override
+    public Optional<Training> findById(Long Id) {
+        return Optional.ofNullable(trainingMap.get(Id));
+    }
 
     @Override
     public Training save(Training value) {
@@ -19,22 +25,6 @@ public class TrainingStorageInMemory implements TrainingRepo {
         return trainingMap.get(value.getId());
     }
 
-    @Override
-    public Optional<Training> findById(Long value) {
-        return Optional.ofNullable(trainingMap.get(value));
-    }
-
-    @Override
-    public List<Training> findAll() {
-        return new ArrayList<>(trainingMap.values());
-    }
-
-    @Override
-    public List<Training> findTrainingByTrainee(String username) {
-        return trainingMap.values().stream()
-                .filter(t -> t.getTraineeUsername().equals(username))
-                .collect(Collectors.toList());
-    }
 
     @Override
     public List<Training> findTrainingByTrainer(String username) {
@@ -44,10 +34,19 @@ public class TrainingStorageInMemory implements TrainingRepo {
     }
 
     @Override
-    public void deleteTrainingByTrainerUsername(String trainerUsername) {
-        trainingMap.values().removeIf(
-                training -> training.getTrainerUsername().equals(trainerUsername));
-
+    public void deleteTrainingById(Long id) {
+        trainingMap.remove(id);
     }
+
+    @Override
+    public List<Training> findTrainingByTrainerUsernameAndTrainingParams(String trainerUsername, LocalDate periodFrom, LocalDate periodTo, String traineeUsername) {
+        return List.of();
+    }
+
+    @Override
+    public List<Training> findTrainingByTraineeUsernameAndTrainingParams(String traineeUsername, LocalDate periodFrom, LocalDate periodTo, String trainerUsername) {
+        return List.of();
+    }
+
 
 }

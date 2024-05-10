@@ -1,31 +1,37 @@
 package com.training_microservice.domain.records;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
 import java.time.LocalDate;
 import java.util.Map;
 
 public class TrainingRecord {
 
-    public record TrainingFilterRequest(
+    public record TrainingParamsRequest(
         LocalDate periodFrom,
         LocalDate periodTo,
-        String user_name,
-        String training_type
+        String trainerUsername,
+        String traineeUsername
         ){
     }
 
+
     public record TraineeTrainingResponse(
+            Long id,
             String trainingName,
             LocalDate trainingDate,
             String trainerUsername,
             Long trainingDuration
     ){
     }
+
     public record TrainerTrainingResponse(
+            Long id,
             String trainingName,
             LocalDate trainingDate,
-            Long traineeUsername,
+            String traineeUsername,
             Long trainingDuration
     ){
     }
