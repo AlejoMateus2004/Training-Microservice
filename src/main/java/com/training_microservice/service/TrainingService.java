@@ -11,7 +11,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.Month;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -95,5 +97,23 @@ public class TrainingService {
         }
     }
 
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<TrainingRecord.TrainerTrainingResponse>> getTrainerTrainingListByTrainingParams(TrainingRecord.TrainingParamsRequest trainingParams){
+        String trainerUsername = trainingParams.trainerUsername();
+        LocalDate periodFrom = trainingParams.periodFrom();
+        LocalDate periodTo = trainingParams.periodTo();
+        String traineeUsername = trainingParams.traineeUsername();
+
+        List<Training> trainings = trainingRepository.findTrainingByTrainerUsernameAndTrainingParams(trainerUsername, periodFrom, periodTo, traineeUsername);
+        if (trainings == null || trainings.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        List<TrainingRecord.TrainerTrainingResponse> list = new ArrayList<>();
+        for (Training training : trainings) {
+            list.add(trainingMapper.trainingToTrainerTrainingResponse(training));
+        }
+
+        return new ResponseEntity<>(list, HttpStatus.OK);
+    }
 
 }

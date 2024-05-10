@@ -1,30 +1,20 @@
 spring:
   application:
     name: training-microservice
-  profiles:
-    active: prod
-  mvc:
-    pathmatch:
-      matching-strategy: ANT_PATH_MATCHER
+  config:
+    import: configserver:http://localhost:8888
+    name: training-microservice
+    activate:
+      on-profile: default, dev
 #  cloud:
 #    config:
-#      enabled: false
-management:
-  server:
-    port: 9003
-  endpoints:
-    web:
-      exposure:
-        include: "*"
-  info:
-    env:
-      enabled: true
-  endpoint:
-    health:
-      show-details: ALWAYS
-#      base-path: "/manage"
+#
+#      uri: http://localhost:8888
+#      name: training-microservice
 
-springdoc:
+springdoc: # OpenAPI (Swagger) Configuration
+  api-docs:
+    enabled: true
   swagger-ui:
     enabled: true
-  show-actuator: true
+    path: /doc/swagger-ui.html

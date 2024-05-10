@@ -3,12 +3,13 @@ package com.training_microservice.dao.inmemory;
 import com.training_microservice.dao.TrainingRepo;
 import com.training_microservice.domain.entities.Training;
 
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class TrainingStorageInMemory implements TrainingRepo {
 
-    private static Map<Long, Training> trainingMap = new HashMap<>();
+    private static final Map<Long, Training> trainingMap = new HashMap<>();
 
     @Override
     public Training save(Training value) {
@@ -17,16 +18,6 @@ public class TrainingStorageInMemory implements TrainingRepo {
         }
         trainingMap.put(value.getId(), value);
         return trainingMap.get(value.getId());
-    }
-
-    @Override
-    public Optional<Training> findById(Long value) {
-        return Optional.ofNullable(trainingMap.get(value));
-    }
-
-    @Override
-    public List<Training> findAll() {
-        return new ArrayList<>(trainingMap.values());
     }
 
     @Override
@@ -49,5 +40,16 @@ public class TrainingStorageInMemory implements TrainingRepo {
                 training -> training.getTrainerUsername().equals(trainerUsername));
 
     }
+
+    @Override
+    public List<Training> findTrainingByTrainerUsernameAndTrainingParams(String trainerUsername, LocalDate periodFrom, LocalDate periodTo, String traineeUsername) {
+        return List.of();
+    }
+
+    @Override
+    public List<Training> findTrainingByTraineeUsernameAndTrainingParams(String traineeUsername, LocalDate periodFrom, LocalDate periodTo, String trainerUsername) {
+        return List.of();
+    }
+
 
 }
