@@ -48,7 +48,9 @@ public class TrainingService {
     public ResponseEntity updateTrainingStatusToCompleted(Long trainingId) {
         try {
             Training training = trainingRepository.findById(trainingId).orElse(null);
-            assert training != null;
+            if (training == null) {
+                throw new IllegalArgumentException("Training not found with ID: " + trainingId);
+            }
             if (training.getTrainingIsCompleted()) {
                 return ResponseEntity.ok().build();
             }
@@ -116,7 +118,9 @@ public class TrainingService {
     public ResponseEntity<Void> deleteTrainingById(Long IdTraining) {
         try {
             Training training =  trainingRepository.findById(IdTraining).orElse(null);
-            assert training != null;
+            if (training == null) {
+                throw new IllegalArgumentException("Training not found with ID: " + IdTraining);
+            }
             boolean isCompleted = training.getTrainingIsCompleted();
             if (!isCompleted) {
                 trainingRepository.deleteTrainingById(IdTraining);
