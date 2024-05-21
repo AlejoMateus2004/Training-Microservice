@@ -30,6 +30,10 @@ public class TrainingService {
     public ResponseEntity saveTraining(TrainingRecord.TrainingRequest trainingRequest) {
         try {
             Training training = trainingMapper.trainingRequestToTraining(trainingRequest);
+            if (training == null) {
+                return ResponseEntity.badRequest().build();
+
+            }
             Training savedTraining =trainingRepository.save(training);
             if (savedTraining != null) {
                 log.info("Training created: {}", savedTraining.getTrainingName());

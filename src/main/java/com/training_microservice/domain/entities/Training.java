@@ -43,15 +43,4 @@ public class Training implements Serializable {
         }
     }
 
-    public Training() {
-    }
-
-    public Training(String traineeUsername, String trainerUsername, String trainingName, Long trainingTypeId, LocalDate trainingDate, Long trainingDuration) {
-        this.traineeUsername = traineeUsername;
-        this.trainerUsername = trainerUsername;
-        this.trainingName = trainingName;
-        this.trainingTypeId = trainingTypeId;
-        this.trainingDate = trainingDate;
-        this.trainingDuration = trainingDuration;
-    }
 }

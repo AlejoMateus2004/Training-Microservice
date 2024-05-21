@@ -14,16 +14,14 @@ spring:
   application:
     name: training-microservice
   profiles:
-    active: dev
-  #  mvc:
-  #    pathmatch:
-  #      matching-strategy: ANT_PATH_MATCHER
+    active: prod
 
   cloud:
     config:
       enabled: false
     compatibility-verifier:
       enabled: false
+
 eureka:
   client:
     fetch-registry: true
@@ -31,8 +29,8 @@ eureka:
     serviceUrl:
       defaultZone: ${EUREKA_URI:http://localhost:8761/eureka}
   instance:
-#    instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
-    hostname: localhost
+    instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
+#    hostname: localhost
 
 
 management:
@@ -46,15 +44,14 @@ management:
   endpoint:
     health:
       show-details: ALWAYS
-#      base-path: "/manage"
 
 springdoc:
   api-docs:
     enabled: 'true'
-    path: /api-docs
   swagger-ui:
     enabled: 'true'
-    path: /swagger-ui-custom.html
+    path: /doc/swagger-ui.html
 
   show-actuator: true
+
 

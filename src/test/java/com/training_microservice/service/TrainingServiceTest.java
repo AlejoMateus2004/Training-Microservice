@@ -71,20 +71,25 @@ class TrainingServiceTest {
     @DisplayName("Test that throw an exception and the result is null while saving the Training")
     @Test
     void saveTraining_ExceptionThrown_LogsErrorAndReturnsBadRequestStatus() {
-        Training training = new Training();
+        when(trainingMapper.trainingRequestToTraining(trainingRequest)).thenReturn(null);
 
-        doThrow(new RuntimeException("Error while saving in the data base")).when(trainingRepository).save(training);
+        // Act
+        ResponseEntity responseEntity = trainingService.saveTraining(trainingRequest);
 
-        ResponseEntity response = trainingService.saveTraining(trainingRequest);
-
-        assertEquals(response.getStatusCode(), HttpStatus.BAD_REQUEST);
-
-
+        // Assert
+        assertEquals(ResponseEntity.badRequest().build(), responseEntity);
+        verify(trainingMapper, times(1)).trainingRequestToTraining(trainingRequest);
+        verifyNoInteractions(trainingRepository);
     }
 
     @Test
     public void testUpdateTrainingStatusToCompleted_Success() {
+        training.setTrainingIsCompleted(false);
+
         when(trainingRepository.findById(1L)).thenReturn(java.util.Optional.of(training));
+
+        when(trainingRepository.save(training)).thenReturn(training);
+
         ResponseEntity response = trainingService.updateTrainingStatusToCompleted(1L);
         // Verify that ResponseEntity is OK
         assertEquals(ResponseEntity.ok().build(), response);
@@ -244,11 +249,11 @@ class TrainingServiceTest {
                 "trainee.username"
 
         );
-        when(trainingRepository.findTrainingByTrainerUsernameAndTrainingParams(
-                        request.trainerUsername(),
+        when(trainingRepository.findTrainingByTraineeUsernameAndTrainingParams(
+                        request.traineeUsername(),
                         request.periodFrom(),
                         request.periodTo(),
-                        request.traineeUsername()
+                        request.trainerUsername()
                 )
         ).thenReturn(Collections.singletonList(training));
 
@@ -271,10 +276,10 @@ class TrainingServiceTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         // Verificar que se llamó al método findTrainingByTrainerUsernameAndTrainingParams del repositorio
         verify(trainingRepository, times(1)).findTrainingByTraineeUsernameAndTrainingParams(
-                request.trainerUsername(),
+                request.traineeUsername(),
                 request.periodFrom(),
                 request.periodTo(),
-                request.traineeUsername()
+                request.trainerUsername()
         );
         // Verificar que se llamó al método trainingToTrainerTrainingResponse del mapper para cada entrenamiento
         verify(trainingMapper, times(1)).trainingToTraineeTrainingResponse(any(Training.class));

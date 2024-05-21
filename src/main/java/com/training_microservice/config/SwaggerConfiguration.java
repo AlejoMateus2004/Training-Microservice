@@ -24,7 +24,5 @@ public class SwaggerConfiguration {
                 .externalDocs(new ExternalDocumentation()
                         .description("Apache 2.0")
                         .url("http://www.apache.org/licenses/LICENSE-2.0.html"));
-
-
     }
 }
