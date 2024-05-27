@@ -53,7 +53,7 @@ public class TrainingService {
         try {
             Training training = trainingRepository.findById(trainingId).orElse(null);
             if (training == null) {
-                throw new IllegalArgumentException("Training not found with ID: " + trainingId);
+                return ResponseEntity.badRequest().build();
             }
             if (training.getTrainingIsCompleted()) {
                 return ResponseEntity.ok().build();
@@ -123,7 +123,7 @@ public class TrainingService {
         try {
             Training training =  trainingRepository.findById(IdTraining).orElse(null);
             if (training == null) {
-                throw new IllegalArgumentException("Training not found with ID: " + IdTraining);
+                return ResponseEntity.badRequest().build();
             }
             boolean isCompleted = training.getTrainingIsCompleted();
             if (!isCompleted) {

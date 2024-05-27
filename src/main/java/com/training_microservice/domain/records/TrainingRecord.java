@@ -4,6 +4,7 @@ package com.training_microservice.domain.records;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.Map;
 
@@ -14,7 +15,7 @@ public class TrainingRecord {
         LocalDate periodTo,
         String trainerUsername,
         String traineeUsername
-        ){
+    ) implements Serializable {
     }
 
 
@@ -24,7 +25,7 @@ public class TrainingRecord {
             LocalDate trainingDate,
             String trainerUsername,
             Long trainingDuration
-    ){
+    ) implements Serializable{
     }
 
     public record TrainerTrainingResponse(
@@ -33,7 +34,7 @@ public class TrainingRecord {
             LocalDate trainingDate,
             String traineeUsername,
             Long trainingDuration
-    ){
+    ) implements Serializable{
     }
 
     public record TrainingRequest(
@@ -47,10 +48,11 @@ public class TrainingRecord {
             LocalDate trainingDate,
             @NotNull(message = "Training Duration can't be null or empty")
             Long trainingDuration
-            ){}
+    ) implements Serializable{
+    }
 
     public record TrainerTrainingSummary (
             Map<Integer, Map<String, Long>> summary
-    ){
+    ) implements Serializable{
     }
 }
