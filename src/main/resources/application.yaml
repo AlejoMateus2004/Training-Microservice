@@ -14,7 +14,7 @@ spring:
   application:
     name: training-microservice
   profiles:
-    active: prod
+    active: prod, activemq
 
   cloud:
     config:

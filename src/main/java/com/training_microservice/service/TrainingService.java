@@ -53,7 +53,7 @@ public class TrainingService {
         try {
             Training training = trainingRepository.findById(trainingId).orElse(null);
             if (training == null) {
-                throw new IllegalArgumentException("Training not found with ID: " + trainingId);
+                return ResponseEntity.badRequest().build();
             }
             if (training.getTrainingIsCompleted()) {
                 return ResponseEntity.ok().build();
@@ -123,7 +123,7 @@ public class TrainingService {
         try {
             Training training =  trainingRepository.findById(IdTraining).orElse(null);
             if (training == null) {
-                throw new IllegalArgumentException("Training not found with ID: " + IdTraining);
+                return ResponseEntity.notFound().build();
             }
             boolean isCompleted = training.getTrainingIsCompleted();
             if (!isCompleted) {
@@ -161,9 +161,9 @@ public class TrainingService {
     @Transactional(readOnly = true)
     public ResponseEntity<List<TrainingRecord.TraineeTrainingResponse>> getTraineeTrainingListByTrainingParams(TrainingRecord.TrainingParamsRequest trainingParams){
         String traineeUsername = trainingParams.traineeUsername();
-        String trainerUsername = trainingParams.trainerUsername();
         LocalDate periodFrom = trainingParams.periodFrom();
         LocalDate periodTo = trainingParams.periodTo();
+        String trainerUsername = trainingParams.trainerUsername();
 
         List<Training> trainings = trainingRepository.findTrainingByTraineeUsernameAndTrainingParams(traineeUsername, periodFrom, periodTo, trainerUsername);
         if (trainings == null || trainings.isEmpty()) {
