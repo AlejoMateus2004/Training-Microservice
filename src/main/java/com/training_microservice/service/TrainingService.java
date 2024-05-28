@@ -53,7 +53,7 @@ public class TrainingService {
         try {
             Training training = trainingRepository.findById(trainingId).orElse(null);
             if (training == null) {
-                return ResponseEntity.badRequest().build();
+                return ResponseEntity.notFound().build();
             }
             if (training.getTrainingIsCompleted()) {
                 return ResponseEntity.ok().build();

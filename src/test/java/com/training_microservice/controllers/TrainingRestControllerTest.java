@@ -75,34 +75,34 @@ class TrainingRestControllerTest {
 
     }
 
-//    @Test
-//    public void testUpdateTrainingStatusSuccess() throws Exception {
-//
-//        when(trainingService.updateTrainingStatusToCompleted(1L))
-//                .thenReturn(ResponseEntity.ok().build());
-//
-//        mockMvc
-//                .perform(put("/training/status/{trainingId}", 1L)
-//                .contentType(MediaType.APPLICATION_JSON)
-//                .accept(MediaType.APPLICATION_JSON))
-//                .andExpect(status().isOk());
-//
-//        verify(trainingService, times(1)).updateTrainingStatusToCompleted(1L);
-//    }
-//
-//    @Test
-//    public void testUpdateTrainingStatusBadRequest() throws Exception {
-//
-//        when(trainingService.updateTrainingStatusToCompleted(1L))
-//                .thenReturn(ResponseEntity.badRequest().build());
-//
-//        mockMvc
-//                .perform(put("/training/status/{trainingId}", 1L)
-//                .contentType(MediaType.APPLICATION_JSON)
-//                .accept(MediaType.APPLICATION_JSON))
-//                .andExpect(status().isBadRequest());
-//
-//        verify(trainingService, times(0)).updateTrainingStatusToCompleted(1L);
-//
-//    }
+    @Test
+    public void testUpdateTrainingStatusSuccess() throws Exception {
+
+        when(trainingService.updateTrainingStatusToCompleted(1L))
+                .thenReturn(ResponseEntity.ok().build());
+
+        mockMvc
+                .perform(put("/training/status/{trainingId}", 1L)
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+
+        verify(trainingService, times(1)).updateTrainingStatusToCompleted(1L);
+    }
+
+    @Test
+    public void testUpdateTrainingStatusBadRequest() throws Exception {
+
+        when(trainingService.updateTrainingStatusToCompleted(1L))
+                .thenReturn(ResponseEntity.badRequest().build());
+
+        mockMvc
+                .perform(put("/training/status/{trainingId}", 1L)
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+
+        verify(trainingService, times(1)).updateTrainingStatusToCompleted(1L);
+
+    }
 }

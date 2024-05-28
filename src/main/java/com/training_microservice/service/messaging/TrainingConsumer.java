@@ -97,7 +97,6 @@ public class TrainingConsumer {
             if (processId == null || processId.isEmpty()) {
                 processId = "";
             }
-            System.out.println(message);
             TrainingRecord.TrainingParamsRequest trainingParams = messageConverter.convertMessageToObject(message, TrainingRecord.TrainingParamsRequest.class);
 
             List<TrainingRecord.TrainerTrainingResponse> response = trainingService.getTrainerTrainingListByTrainingParams(trainingParams).getBody();
