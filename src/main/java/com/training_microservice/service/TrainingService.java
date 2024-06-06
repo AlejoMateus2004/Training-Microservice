@@ -4,6 +4,7 @@ import com.training_microservice.dao.TrainingRepo;
 import com.training_microservice.domain.entities.Training;
 import com.training_microservice.domain.records.TrainingRecord;
 import com.training_microservice.mapper.TrainingMapper;
+import jakarta.validation.*;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -13,10 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.Month;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
 
 @Slf4j
 @Service
@@ -29,6 +28,16 @@ public class TrainingService {
     @Transactional
     public ResponseEntity saveTraining(TrainingRecord.TrainingRequest trainingRequest) {
         try {
+            Set<ConstraintViolation<TrainingRecord.TrainingRequest>> violations;
+
+            try (ValidatorFactory factory = Validation.buildDefaultValidatorFactory()) {
+                Validator validator = factory.getValidator();
+                violations = validator.validate(trainingRequest);
+            }
+
+            if (!violations.isEmpty()) {
+                throw new ConstraintViolationException(violations);
+            }
             Training training = trainingMapper.trainingRequestToTraining(trainingRequest);
             if (training == null) {
                 return ResponseEntity.badRequest().build();
@@ -41,6 +50,10 @@ public class TrainingService {
             } else {
                 log.error("Failed to save training. Null response from repository.");
             }
+            return ResponseEntity.badRequest().build();
+        }catch (ConstraintViolationException cVex){
+            log.error("Constraint Violation Exception");
+            cVex.getConstraintViolations().forEach(e->log.error(e.getMessage()));
             return ResponseEntity.badRequest().build();
         } catch (Exception e) {
             log.error("Error, saving Training", e);

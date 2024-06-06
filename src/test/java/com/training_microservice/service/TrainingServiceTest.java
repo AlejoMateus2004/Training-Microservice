@@ -63,6 +63,7 @@ class TrainingServiceTest {
     void testSaveTraining() {
         when(trainingMapper.trainingRequestToTraining(trainingRequest)).thenReturn(training);
         when(trainingRepository.save(training)).thenReturn(training);
+
         ResponseEntity response = trainingService.saveTraining(trainingRequest);
         assertNotNull(response);
         assertEquals(response.getStatusCode(), HttpStatus.OK);
@@ -126,33 +127,27 @@ class TrainingServiceTest {
     public void testGetTrainingSummaryByTrainer_Success() {
         when(trainingRepository.findTrainingByTrainer("trainer.username"))
                 .thenReturn(Collections.singletonList(training));
-        // Llamar al método con el nombre de entrenador válido
+
         ResponseEntity<TrainingRecord.TrainerTrainingSummary> response = trainingService.getTrainingSummaryByTrainer("trainer.username");
 
-        // Verificar que la respuesta sea OK
         assertEquals(HttpStatus.OK, response.getStatusCode());
 
-        // Verificar la estructura del resumen del entrenador
         TrainingRecord.TrainerTrainingSummary summary = response.getBody();
         assert summary != null;
-        assertEquals(1, summary.summary().size()); // Debería haber datos para dos años
+        assertEquals(1, summary.summary().size());
 
-        // Verificar datos específicos
         Map<String, Long> summary2022 = summary.summary().get(2022);
-        assertEquals(1, summary2022.size()); // Debería haber datos para dos meses en 2022
+        assertEquals(1, summary2022.size());
         assertEquals(Long.valueOf(105), summary2022.get("AUGUST"));
     }
 
     @Test
     public void testGetTrainingSummaryByTrainer_NoTrainings() {
-        // Configurar comportamiento del mock para el método findTrainingByTrainer devolviendo una lista vacía
         when(trainingRepository.findTrainingByTrainer("trainer.username"))
                 .thenReturn(new ArrayList<>());
 
-        // Llamar al método con el nombre de entrenador válido
         ResponseEntity<TrainingRecord.TrainerTrainingSummary> response = trainingService.getTrainingSummaryByTrainer("trainer.username");
 
-        // Verificar que la respuesta sea Not Found
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
     }
     @Test
@@ -160,12 +155,9 @@ class TrainingServiceTest {
         training.setTrainingIsCompleted(false);
         when(trainingRepository.findById(1L)).thenReturn(java.util.Optional.of(training));
 
-        // Llamar al método con un ID de entrenamiento válido
         ResponseEntity<Void> response = trainingService.deleteTrainingById(1L);
 
-        // Verificar que la respuesta sea OK
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        // Verificar que se llamó al método deleteTrainingById del repositorio
         verify(trainingRepository, times(1)).deleteTrainingById(1L);
     }
 
@@ -173,12 +165,9 @@ class TrainingServiceTest {
     public void testDeleteTrainingById_CompletedTraining() {
         when(trainingRepository.findById(1L)).thenReturn(java.util.Optional.of(training));
 
-        // Llamar al método con un ID de entrenamiento de un entrenamiento completado
         ResponseEntity<Void> response = trainingService.deleteTrainingById(1L);
 
-        // Verificar que la respuesta sea BadRequest
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        // Verificar que el método deleteTrainingById del repositorio no se haya llamado
         verify(trainingRepository, never()).deleteTrainingById(anyLong());
     }
 
@@ -186,12 +175,9 @@ class TrainingServiceTest {
     public void testDeleteTrainingById_TrainingNotFound() {
         when(trainingRepository.findById(2L)).thenReturn(null);
 
-        // Llamar al método con un ID de entrenamiento que no existe
         ResponseEntity<Void> response = trainingService.deleteTrainingById(2L);
 
-        // Verificar que la respuesta sea InternalServerError
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
-        // Verificar que el método deleteTrainingById del repositorio no se haya llamado
         verify(trainingRepository, never()).deleteTrainingById(anyLong());
     }
 
@@ -212,7 +198,6 @@ class TrainingServiceTest {
             )
         ).thenReturn(Collections.singletonList(training));
 
-        // Configurar comportamiento del mock para el método trainingToTrainerTrainingResponse
         when(trainingMapper.trainingToTrainerTrainingResponse(any(Training.class)))
                 .thenReturn(new TrainingRecord.TrainerTrainingResponse(
                         1L,
@@ -221,22 +206,17 @@ class TrainingServiceTest {
                         training.getTraineeUsername(),
                         training.getTrainingDuration()
                 ));
-        // Crear objeto de solicitud de parámetros
 
 
-        // Llamar al método con los parámetros de solicitud válidos
         ResponseEntity<List<TrainingRecord.TrainerTrainingResponse>> response = trainingService.getTrainerTrainingListByTrainingParams(request);
 
-        // Verificar que la respuesta sea OK
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        // Verificar que se llamó al método findTrainingByTrainerUsernameAndTrainingParams del repositorio
         verify(trainingRepository, times(1)).findTrainingByTrainerUsernameAndTrainingParams(
                 request.trainerUsername(),
                 request.periodFrom(),
                 request.periodTo(),
                 request.traineeUsername()
         );
-        // Verificar que se llamó al método trainingToTrainerTrainingResponse del mapper para cada entrenamiento
         verify(trainingMapper, times(1)).trainingToTrainerTrainingResponse(any(Training.class));
     }
 
@@ -257,7 +237,6 @@ class TrainingServiceTest {
                 )
         ).thenReturn(Collections.singletonList(training));
 
-        // Configurar comportamiento del mock para el método trainingToTrainerTrainingResponse
         when(trainingMapper.trainingToTraineeTrainingResponse(any(Training.class)))
                 .thenReturn(new TrainingRecord.TraineeTrainingResponse(
                         1L,
@@ -266,22 +245,16 @@ class TrainingServiceTest {
                         training.getTrainerUsername(),
                         training.getTrainingDuration()
                 ));
-        // Crear objeto de solicitud de parámetros
 
-
-        // Llamar al método con los parámetros de solicitud válidos
         ResponseEntity<List<TrainingRecord.TraineeTrainingResponse>> response = trainingService.getTraineeTrainingListByTrainingParams(request);
 
-        // Verificar que la respuesta sea OK
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        // Verificar que se llamó al método findTrainingByTrainerUsernameAndTrainingParams del repositorio
         verify(trainingRepository, times(1)).findTrainingByTraineeUsernameAndTrainingParams(
                 request.traineeUsername(),
                 request.periodFrom(),
                 request.periodTo(),
                 request.trainerUsername()
         );
-        // Verificar que se llamó al método trainingToTrainerTrainingResponse del mapper para cada entrenamiento
         verify(trainingMapper, times(1)).trainingToTraineeTrainingResponse(any(Training.class));
     }
 }

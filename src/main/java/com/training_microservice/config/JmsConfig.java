@@ -26,9 +26,9 @@ public class JmsConfig {
         factory.setConnectionFactory(connectionFactory);
         factory.setConcurrency("5-10");
         factory.setMessageConverter(jacksonJmsMessageConverter());
-//        factory.setErrorHandler(t -> {
-//            log.error("Handling error in listening for messages, error: {}", t.getMessage());
-//        });
+        factory.setErrorHandler(t -> {
+            log.error("Handling error in listening for messages, error: {}", t.getMessage());
+        });
 
         return factory;
     }

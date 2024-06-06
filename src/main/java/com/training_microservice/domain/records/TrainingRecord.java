@@ -50,7 +50,7 @@ public class TrainingRecord {
             Long trainingDuration
     ) implements Serializable{
     }
-
+    // year, month, workload duration
     public record TrainerTrainingSummary (
             Map<Integer, Map<String, Long>> summary
     ) implements Serializable{

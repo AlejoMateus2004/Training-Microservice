@@ -1,10 +1,12 @@
 package com.training_microservice.config;
 
+import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -14,6 +16,7 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import java.nio.file.AccessDeniedException;
+import java.util.NoSuchElementException;
 
 @ControllerAdvice
 @RestControllerAdvice
@@ -34,21 +37,23 @@ public class GlobalExceptionHandlerConfig extends ResponseEntityExceptionHandler
         logger.error("Unauthorized access", ex);
         return handleExceptionInternal(ex, "Unauthorized access", null, HttpStatus.FORBIDDEN, request);
     }
+    @ExceptionHandler(NoSuchElementException.class)
+    public ResponseEntity<String> handleNoSuchElementException(NoSuchElementException e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+    }
 
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<String> handleConstraintViolationException(ConstraintViolationException e) {
+        logger.error(e.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+    }
 
-//    @ExceptionHandler(value = { UsernameNotFoundException.class })
-//    @ResponseStatus(HttpStatus.NOT_FOUND)
-//    public ResponseEntity<Object> handleUsernameNotFoundException(UsernameNotFoundException ex, WebRequest request) {
-//        logger.error("Username not found", ex);
-//        return handleExceptionInternal(ex, "Username not found", null, HttpStatus.NOT_FOUND, request);
-//    }
-//
-//    @ExceptionHandler(value = { DisabledException.class })
-//    @ResponseStatus(HttpStatus.FORBIDDEN)
-//    public ResponseEntity<Object> handleDisabledException(DisabledException ex, WebRequest request) {
-//        logger.error("User account is disabled", ex);
-//        return handleExceptionInternal(ex, "User account is disabled", null, HttpStatus.FORBIDDEN, request);
-//    }
+    @ExceptionHandler(value = { DisabledException.class })
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ResponseEntity<Object> handleDisabledException(DisabledException ex, WebRequest request) {
+        logger.error("User account is disabled", ex);
+        return handleExceptionInternal(ex, "User account is disabled", null, HttpStatus.FORBIDDEN, request);
+    }
 
     @ExceptionHandler(value = { DataIntegrityViolationException.class })
     @ResponseStatus(HttpStatus.CONFLICT)
@@ -58,7 +63,11 @@ public class GlobalExceptionHandlerConfig extends ResponseEntityExceptionHandler
     }
 
 
-    record ExceptionResponse(String message, String code, String description){};
+    record ExceptionResponse(
+            String message,
+            String code,
+            String description){
+    };
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ExceptionResponse> handleGenericException(Exception ex, WebRequest request) {
