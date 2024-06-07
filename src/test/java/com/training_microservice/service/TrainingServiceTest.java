@@ -35,6 +35,7 @@ class TrainingServiceTest {
     private TrainingService trainingService;
     private Training training;
     private TrainingRecord.TrainingRequest trainingRequest;
+
     @BeforeEach
     void setUp() {
         trainingRequest = new TrainingRecord.TrainingRequest(

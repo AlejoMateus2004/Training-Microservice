@@ -35,16 +35,21 @@ public class TrainingConsumer {
                 processId = "";
             }
             TrainingRecord.TrainingRequest trainingRequest = messageConverter.convertMessageToObject(message, TrainingRecord.TrainingRequest.class);
-            trainingService.saveTraining(trainingRequest);
-            producer.sendMessage("queue.saveTraining.response", "Saved", processId);
-            log.info("Saved Training {}", trainingRequest);
+
+            ResponseEntity response = trainingService.saveTraining(trainingRequest);
+            if (response.getStatusCode().isSameCodeAs(HttpStatus.OK)) {
+                producer.sendMessage("queue.saveTraining.response", "Saved", processId);
+                log.info("Training Saved");
+            }else{
+                log.info("Training Not Saved");
+                producer.sendMessage("queue.saveTraining.response", "Not Saved", processId);
+            }
         } catch (Exception ex) {
             log.error(ex.getMessage());
             producer.sendMessage("queue.saveTraining.response", "Not Saved", processId);
         }
 
     }
-
 
     @Operation( summary= "Update Training Status")
     @JmsListener(destination = "queue.updateTraining")
@@ -56,9 +61,15 @@ public class TrainingConsumer {
                 processId = "";
             }
             Long trainingId = messageConverter.convertMessageToObject(message, Long.class);
-            trainingService.updateTrainingStatusToCompleted(trainingId);
-            producer.sendMessage("queue.updateTraining.response", "Updated", processId);
-            log.info("Updated Training ID: {}", trainingId);
+            ResponseEntity response = trainingService.updateTrainingStatusToCompleted(trainingId);
+            if (response.getStatusCode().isSameCodeAs(HttpStatus.OK)) {
+                producer.sendMessage("queue.updateTraining.response", "Updated", processId);
+                log.info("Training Updated");
+            }else{
+                log.info("Training Not Updated");
+                producer.sendMessage("queue.updateTraining.response", "Not Updated", processId);
+            }
+
         } catch (Exception ex) {
             log.error(ex.getMessage());
             producer.sendMessage("queue.updateTraining.response", "Not Updated", processId);
@@ -84,8 +95,6 @@ public class TrainingConsumer {
             log.error(ex.getMessage());
             producer.sendMessage("queue.summaryTrainer.response", ResponseEntity.notFound(), processId);
         }
-
-
     }
 
     @Operation(summary = "Get Training List by Trainer username, and Training Params")

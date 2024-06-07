@@ -1,11 +1,18 @@
 package com.training_microservice.cucumber;
 
+import com.training_microservice.dao.TrainingRepo;
+import com.training_microservice.dao.TrainingRepository;
+import com.training_microservice.domain.entities.Training;
 import com.training_microservice.domain.records.TrainingRecord;
+import com.training_microservice.mapper.TrainingMapperImpl;
 import com.training_microservice.service.TrainingService;
+import io.cucumber.java.Before;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -14,17 +21,34 @@ import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.ArgumentMatchers.any;
 
 public class TrainingServiceSteps {
-
-    @Autowired
+    @Mock
+    private TrainingRepo trainingRepository;
     private TrainingService trainingService;
-
     private TrainingRecord.TrainingRequest trainingRequest;
     private ResponseEntity response;
+    private TrainingRecord.TrainingParamsRequest request;
+    private Training training;
+    @Before
+    public void setUp() {
+        MockitoAnnotations.openMocks(this);
+        trainingService = new TrainingService(new TrainingMapperImpl(), trainingRepository);
+
+        training =  new Training();
+        training.setId(1L);
+        training.setTrainingTypeId(1L);
+        training.setTraineeUsername("trainee.username");
+        training.setTrainerUsername("trainer.username");
+        training.setTrainingDate(LocalDate.parse("2022-08-06"));
+        training.setTrainingDuration(3L);
+        training.setTrainingName("Plan Three Months");
+        training.setTrainingIsCompleted(false);
+    }
 
     @Given("The user types a valid training request")
-    public void the_user_types_a_valid_training_request() {
+    public void theUserTypesAValidTrainingRequest() {
         trainingRequest = new TrainingRecord.TrainingRequest(
                 "trainee.username",
                 "trainer.username",
@@ -36,16 +60,16 @@ public class TrainingServiceSteps {
     }
 
     @When("The user saves the training request")
-    public void the_user_saves_the_training_request() {
+    public void theUserSavesTheTrainingRequest() {
+        Mockito.when(trainingRepository.save(any(Training.class))).thenReturn(training);
         response = trainingService.saveTraining(trainingRequest);
     }
 
     @Then("The training should be created successfully")
-    public void the_training_should_be_created_successfully() {
+    public void theTrainingShouldBeCreatedSuccessfully() {
         assertNotNull(response);
         assertEquals(ResponseEntity.ok().build(), response);
     }
-    
 
     @Given("The user types an invalid training request")
     public void theUserTypesAnInvalidTrainingRequest() {
@@ -73,18 +97,13 @@ public class TrainingServiceSteps {
     
     @Given("There is an existing training record")
     public void thereIsAnExistingTrainingRecord() {
-        trainingRequest = new TrainingRecord.TrainingRequest(
-                "trainee.username",
-                "trainer.username",
-                "Plan Three Months",
-                LocalDate.parse("2022-08-06"),
-                3L
-        );
-        trainingService.saveTraining(trainingRequest);
     }
 
-    @When("The user requests to update the training status to completed")
-    public void theUserRequestsToUpdateTheTrainingStatusToCompleted() {
+    @When("The user requests to update the training status to completed with valid id")
+    public void theUserRequestsToUpdateTheTrainingStatusToCompletedWithValidId() {
+        Mockito.when(trainingRepository.findById(1L)).thenReturn(Optional.ofNullable(training));
+        training.setTrainingIsCompleted(true);
+        Mockito.when(trainingRepository.save(any(Training.class))).thenReturn(training);
         response = trainingService.updateTrainingStatusToCompleted(1L);
     }
 
@@ -96,7 +115,11 @@ public class TrainingServiceSteps {
 
     @Given("The user tries to update a training record that does not exist")
     public void theUserTriesToUpdateATrainingRecordThatDoesNotExist() {
-        //Training record does not exist
+    }
+
+    @When("The user requests to update the training status to completed with invalid id")
+    public void theUserRequestsToUpdateTheTrainingStatusToCompletedWithInvalidId() {
+        response = trainingService.updateTrainingStatusToCompleted(1L);
     }
 
     @Then("An error message indicating that the training does not exist should be returned")
@@ -108,19 +131,14 @@ public class TrainingServiceSteps {
 
     @Given("That user has multiple training records")
     public void thatUserHasMultipleTrainingRecords() {
-        trainingRequest = new TrainingRecord.TrainingRequest(
-                "trainee.username",
-                "trainer.username",
-                "Plan Three Months",
-                LocalDate.parse("2022-08-06"),
-                3L
-        );
-        trainingService.saveTraining(trainingRequest);
-        trainingService.updateTrainingStatusToCompleted(1L);
     }
 
-    @When("The user requests his workload summary")
-    public void theUserRequestsHisWorkloadSummary() {
+    @When("The user requests his workload summary by trainer username {string}")
+    public void theUserRequestsHisWorkloadSummaryByTrainerUsername(String username) {
+        if (username.equals("trainer.username")) {
+            training.setTrainingIsCompleted(true);
+            Mockito.when(trainingRepository.findTrainingByTrainer("trainer.username")).thenReturn(Collections.singletonList(training));
+        }
         response = trainingService.getTrainingSummaryByTrainer("trainer.username");
     }
 
@@ -152,18 +170,11 @@ public class TrainingServiceSteps {
 
     @Given("There is an existing training record with an id")
     public void thereIsAnExistingTrainingRecordWithAnId() {
-        trainingRequest = new TrainingRecord.TrainingRequest(
-                "trainee.username",
-                "trainer.username",
-                "Plan Three Months",
-                LocalDate.parse("2022-08-06"),
-                3L
-        );
-        trainingService.saveTraining(trainingRequest);
     }
 
     @When("The user requests to delete the training by id")
     public void theUserRequestsToDeleteTheTrainingById() {
+        Mockito.when(trainingRepository.findById(1L)).thenReturn(Optional.ofNullable(training));
         response = trainingService.deleteTrainingById(1L);
     }
 
@@ -185,25 +196,18 @@ public class TrainingServiceSteps {
 /////////////////////////////  
     @Given("The user has multiple training records")
     public void theUserHasMultipleTrainingRecords() {
-        trainingRequest = new TrainingRecord.TrainingRequest(
-                "trainee.username",
-                "trainer.username",
-                "Plan Three Months",
-                LocalDate.parse("2022-08-06"),
-                3L
-        );
-        trainingService.saveTraining(trainingRequest);
-    }
-
-    @When("The user requests his training list by training params")
-    public void the_user_requests_his_training_list_by_training_params() {
-        TrainingRecord.TrainingParamsRequest request = new TrainingRecord.TrainingParamsRequest(
+        request = new TrainingRecord.TrainingParamsRequest(
                 LocalDate.parse("2022-08-06"),
                 LocalDate.now(),
                 "trainer.username",
                 "trainee.username"
 
         );
+    }
+
+    @When("The user requests his training list by training params")
+    public void theUserRequestsHisTrainingListByTrainingParams() {
+        Mockito.when(trainingRepository.findTrainingByTrainerUsernameAndTrainingParams("trainer.username", request.periodFrom(), request.periodTo(), request.traineeUsername())).thenReturn(Collections.singletonList(training));
         response = trainingService.getTrainerTrainingListByTrainingParams(request);
     }
 
@@ -225,6 +229,13 @@ public class TrainingServiceSteps {
 
     @Given("The user has no training records")
     public void theUserHasNoTrainingRecords() {
-        //The user has no training records
+        request = new TrainingRecord.TrainingParamsRequest(
+                LocalDate.parse("2022-08-06"),
+                LocalDate.now(),
+                "invalid.username",
+                "trainee.username"
+
+        );
     }
+
 }

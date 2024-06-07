@@ -13,8 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 @CucumberOptions(
         features = {"src/test/resources"},
         plugin = {"pretty"},
-        glue = {"com.training_microservice.cucumber.TrainingServiceSteps"})
+        glue = {"com.training_microservice.cucumber.TrainingServiceSteps","com.training_microservice.cucumber.TrainingConsumerSteps"}
+)
+
 public class CucumberSpringConfiguration {
-
-
 }

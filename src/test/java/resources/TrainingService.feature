@@ -12,22 +12,22 @@ Feature: Training management
 
   Scenario: The user updates the training status to completed
     Given There is an existing training record
-    When The user requests to update the training status to completed
+    When The user requests to update the training status to completed with valid id
     Then The training status should be updated to completed
 
   Scenario: The user tries to update the training status of a non-existing record
     Given The user tries to update a training record that does not exist
-    When The user requests to update the training status to completed
+    When The user requests to update the training status to completed with invalid id
     Then An error message indicating that the training does not exist should be returned
 
   Scenario: The user gets his workload summary
     Given That user has multiple training records
-    When The user requests his workload summary
+    When The user requests his workload summary by trainer username "trainer.username"
     Then The user should receive a workload summary
 
   Scenario: The user tries to get a workload summary with no training records
     Given That the user has no training records
-    When The user requests his workload summary
+    When The user requests his workload summary by trainer username "trainer2.username"
     Then An error message indicating that there are no training records should be returned
 
   Scenario: The user deletes a training by id
