@@ -1,6 +1,8 @@
 package com.training_microservice.service;
 
+import com.training_microservice.dao.TrainerSummaryRepo;
 import com.training_microservice.dao.TrainingRepo;
+import com.training_microservice.domain.documents.TrainerSummary;
 import com.training_microservice.domain.entities.Training;
 import com.training_microservice.domain.records.TrainingRecord;
 import com.training_microservice.mapper.TrainingMapper;
@@ -24,6 +26,7 @@ public class TrainingService {
 
     private TrainingMapper trainingMapper;
     private TrainingRepo trainingRepository;
+    private TrainerSummaryRepo trainerSummaryRepo;
 
     @Transactional
     public ResponseEntity saveTraining(TrainingRecord.TrainingRequest trainingRequest) {
@@ -43,8 +46,11 @@ public class TrainingService {
                 return ResponseEntity.badRequest().build();
 
             }
-            Training savedTraining =trainingRepository.save(training);
+            Training savedTraining = trainingRepository.save(training);
+            TrainerSummary trainerSummary = trainingRequestToTrainerSummary(trainingRequest);
+
             if (savedTraining != null) {
+                trainerSummaryRepo.save(trainerSummary);
                 log.info("Training created: {}", savedTraining.getTrainingName());
                 return ResponseEntity.ok().build();
             } else {
@@ -87,43 +93,16 @@ public class TrainingService {
     }
 
     @Transactional(readOnly = true)
-    public ResponseEntity<TrainingRecord.TrainerTrainingSummary> getTrainingSummaryByTrainer(String trainerUsername) {
+    public ResponseEntity<TrainerSummary> getTrainingSummaryByTrainer(String trainerUsername) {
         try {
             // Retrieve trainings for the given trainer username
-            List<Training> trainings = trainingRepository.findTrainingByTrainer(trainerUsername);
+            TrainerSummary trainerSummary = trainerSummaryRepo.findById(trainerUsername).orElse(null);
 
-            if (trainings == null || trainings.isEmpty()) {
+            if (trainerSummary == null) {
                 return ResponseEntity.notFound().build(); // Return 404 if no trainings found
             }
 
-            // Create a map to store the summary for each year and month
-            Map<Integer, Map<String, Long>> trainerSummaryMap = new HashMap<>();
-
-            // Iterate over each training
-            for (Training training : trainings) {
-                if (!training.getTrainingIsCompleted()) {
-                   continue; 
-                }
-                // Get year, month, and duration from the training
-                int year = training.getTrainingDate().getYear();
-                String month = Month.of(training.getTrainingDate().getMonthValue()).toString();
-                long duration = training.getTrainingDuration();
-
-                // If the year is not present in the trainer's map, create a new map for the year
-                trainerSummaryMap.putIfAbsent(year, new HashMap<>());
-
-                // Get the map for the year
-                Map<String, Long> monthDurationMap = trainerSummaryMap.get(year);
-
-                // Update the total duration for the month
-                monthDurationMap.merge(month, duration, Long::sum);
-            }
-
-            // Create a TrainerTrainingSummary object
-            TrainingRecord.TrainerTrainingSummary trainerTrainingSummary =
-                    new TrainingRecord.TrainerTrainingSummary(trainerSummaryMap);
-
-            return ResponseEntity.ok().body(trainerTrainingSummary); // Return response if trainings exist
+            return ResponseEntity.ok().body(trainerSummary); // Return response if trainings exist
         } catch (Exception e) {
             // Log and return 500 Internal Server Error if an exception occurs
             log.error("Error occurred while retrieving trainings for trainer: {}", trainerUsername, e);
@@ -138,9 +117,20 @@ public class TrainingService {
             if (training == null) {
                 return ResponseEntity.notFound().build();
             }
+
             boolean isCompleted = training.getTrainingIsCompleted();
             if (!isCompleted) {
+                TrainerSummary trainerSummary = trainerSummaryRepo.findById(training.getTrainerUsername()).orElse(null);
+                if (trainerSummary == null) {
+                    return ResponseEntity.notFound().build();
+                }
                 trainingRepository.deleteTrainingById(IdTraining);
+                TrainerSummary trainerSummary1 = deleteTrainingDuration(trainerSummary, training.getTrainingDate(), training.getTrainingDuration());
+                if (trainerSummary1 == null) {
+                    trainerSummaryRepo.deleteById(training.getTrainerUsername());
+                }else{
+                    trainerSummaryRepo.save(trainerSummary1);
+                }
                 log.info("Training deleted: {}", IdTraining);
                 return ResponseEntity.ok().build();
             }
@@ -188,6 +178,86 @@ public class TrainingService {
         }
 
         return new ResponseEntity<>(list, HttpStatus.OK);
+    }
+
+    private TrainerSummary trainingRequestToTrainerSummary(TrainingRecord.TrainingRequest trainingRequest) {
+
+        String trainerUsername = trainingRequest.trainerUsername();
+        TrainerSummary trainerSummary = trainerSummaryRepo.findById(trainerUsername)
+                .orElseGet(() -> createTrainerSummaryFromRequest(trainingRequest));
+
+        Map<Integer, Map<String, Long>> trainerSummaryMap = trainerSummary.getSummary();
+
+        // Check if the trainerSummaryMap is null and, if so, initialise it
+        if (trainerSummaryMap == null) {
+            trainerSummaryMap = new HashMap<>();
+        }
+
+        int year = trainingRequest.trainingDate().getYear();
+        String month = Month.of(trainingRequest.trainingDate().getMonthValue()).toString();
+        long duration = trainingRequest.trainingDuration();
+
+        // If the year is not present in the trainer's map, create a new map for the year
+        trainerSummaryMap.putIfAbsent(year, new HashMap<>());
+
+        // Get the map for the year
+        Map<String, Long> monthDurationMap = trainerSummaryMap.get(year);
+
+        // Update the total duration for the month
+        monthDurationMap.merge(month, duration, Long::sum);
+
+        trainerSummary.setSummary(trainerSummaryMap);
+
+        return trainerSummary;
+    }
+
+    private TrainerSummary createTrainerSummaryFromRequest(TrainingRecord.TrainingRequest trainingRequest) {
+        TrainerSummary trainerSummary = new TrainerSummary();
+        trainerSummary.setTrainerUsername(trainingRequest.trainerUsername());
+        trainerSummary.setTrainerFirstName(trainingRequest.trainerFirstName());
+        trainerSummary.setTrainerLastName(trainingRequest.trainerLastName());
+        trainerSummary.setTrainerStatus(trainingRequest.trainerStatus());
+        return trainerSummary;
+    }
+
+    private TrainerSummary deleteTrainingDuration(TrainerSummary trainerSummary, LocalDate date, long trainingDuration){
+        Map<Integer, Map<String, Long>> trainerSummaryMap = trainerSummary.getSummary();
+
+        // Check if the trainerSummaryMap is null and, if so, initialise it
+        if (trainerSummaryMap == null) {
+            return null;
+        }
+
+        int year = date.getYear();
+        String month = Month.of(date.getMonthValue()).toString();
+
+        // Get the map for the year
+        Map<String, Long> monthDurationMap = trainerSummaryMap.get(year);
+        if (monthDurationMap == null) {
+            return null;
+        }
+        Long currentDuration = monthDurationMap.get(month);
+        if (currentDuration != null) {
+            // Decrease the total duration for the month by training duration
+            long newDuration = currentDuration - trainingDuration;
+
+            if (newDuration <= 0) {
+                // If the new duration is 0 or negative, remove the entry from the map
+                monthDurationMap.remove(month);
+            } else {
+                // Otherwise, update the total duration for the month
+                monthDurationMap.put(month, newDuration);
+            }
+        }
+        if (monthDurationMap.isEmpty()) {
+            trainerSummaryMap.remove(year);
+        }
+        if (trainerSummaryMap.isEmpty()) {
+            return null;
+        }
+        trainerSummary.setSummary(trainerSummaryMap);
+
+        return trainerSummary;
     }
 
 }

@@ -14,8 +14,7 @@ spring:
   application:
     name: training-microservice
   profiles:
-    active: prod, activemq
-
+    active: prod, activemq, mongo
   cloud:
     config:
       enabled: false

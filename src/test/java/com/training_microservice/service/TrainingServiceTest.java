@@ -1,6 +1,8 @@
 package com.training_microservice.service;
 
+import com.training_microservice.dao.TrainerSummaryRepo;
 import com.training_microservice.dao.TrainingRepo;
+import com.training_microservice.domain.documents.TrainerSummary;
 import com.training_microservice.domain.entities.Training;
 import com.training_microservice.domain.records.TrainingRecord;
 import com.training_microservice.mapper.TrainingMapper;
@@ -30,17 +32,22 @@ class TrainingServiceTest {
 
     @Mock
     private TrainingMapper trainingMapper;
-
+    @Mock
+    private TrainerSummaryRepo trainerSummaryRepo;
     @InjectMocks
     private TrainingService trainingService;
     private Training training;
     private TrainingRecord.TrainingRequest trainingRequest;
 
+    private TrainerSummary trainerSummary;
     @BeforeEach
     void setUp() {
         trainingRequest = new TrainingRecord.TrainingRequest(
-                "trainee.username",
+                "Trainer",
+                "Username",
                 "trainer.username",
+                true,
+                "trainee.username",
                 "Plan Three Months",
                 LocalDate.parse("2022-08-06"),
                 3L
@@ -51,19 +58,29 @@ class TrainingServiceTest {
         training.setTraineeUsername("trainee.username");
         training.setTrainerUsername("trainer.username");
         training.setTrainingDate(LocalDate.parse("2022-08-06"));
-        training.setTrainingDuration(105L);
+        training.setTrainingDuration(3L);
         training.setTrainingName("Plan Three Months");
         training.setTrainingIsCompleted(true);
 
+        trainerSummary = new TrainerSummary();
+        trainerSummary.setTrainerUsername("trainer.username");
+        trainerSummary.setTrainerFirstName("Trainer");
+        trainerSummary.setTrainerLastName("Username");
+        trainerSummary.setTrainerStatus(true);
+
+        Map<Integer, Map<String, Long>> trainerSummaryMap = new HashMap<>();
+        Map<String, Long> monthDurationMap = new HashMap<>();
+        monthDurationMap.put("AUGUST", 3L);
+        trainerSummaryMap.put(2022, monthDurationMap);
+        trainerSummary.setSummary(trainerSummaryMap);
     }
-
-
 
     @DisplayName("Test save Training")
     @Test
     void testSaveTraining() {
         when(trainingMapper.trainingRequestToTraining(trainingRequest)).thenReturn(training);
         when(trainingRepository.save(training)).thenReturn(training);
+        when(trainerSummaryRepo.save(trainerSummary)).thenReturn(trainerSummary);
 
         ResponseEntity response = trainingService.saveTraining(trainingRequest);
         assertNotNull(response);
@@ -126,35 +143,34 @@ class TrainingServiceTest {
 
     @Test
     public void testGetTrainingSummaryByTrainer_Success() {
-        when(trainingRepository.findTrainingByTrainer("trainer.username"))
-                .thenReturn(Collections.singletonList(training));
 
-        ResponseEntity<TrainingRecord.TrainerTrainingSummary> response = trainingService.getTrainingSummaryByTrainer("trainer.username");
+        when(trainerSummaryRepo.findById("trainer.username"))
+                .thenReturn(Optional.ofNullable(trainerSummary));
+
+        ResponseEntity<TrainerSummary> response = trainingService.getTrainingSummaryByTrainer("trainer.username");
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
+        TrainerSummary summary = response.getBody();
+        assertNotNull(summary);
+        assertEquals(1, summary.getSummary().size());
 
-        TrainingRecord.TrainerTrainingSummary summary = response.getBody();
-        assert summary != null;
-        assertEquals(1, summary.summary().size());
-
-        Map<String, Long> summary2022 = summary.summary().get(2022);
+        Map<String, Long> summary2022 = summary.getSummary().get(2022);
         assertEquals(1, summary2022.size());
-        assertEquals(Long.valueOf(105), summary2022.get("AUGUST"));
+        assertEquals(Long.valueOf(3), summary2022.get("AUGUST"));
     }
 
     @Test
     public void testGetTrainingSummaryByTrainer_NoTrainings() {
-        when(trainingRepository.findTrainingByTrainer("trainer.username"))
-                .thenReturn(new ArrayList<>());
-
-        ResponseEntity<TrainingRecord.TrainerTrainingSummary> response = trainingService.getTrainingSummaryByTrainer("trainer.username");
+        ResponseEntity response = trainingService.getTrainingSummaryByTrainer("trainer.username");
 
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
     }
+
     @Test
     public void testDeleteTrainingById_Success() {
         training.setTrainingIsCompleted(false);
         when(trainingRepository.findById(1L)).thenReturn(java.util.Optional.of(training));
+        when(trainerSummaryRepo.findById("trainer.username")).thenReturn(Optional.ofNullable(trainerSummary));
 
         ResponseEntity<Void> response = trainingService.deleteTrainingById(1L);
 

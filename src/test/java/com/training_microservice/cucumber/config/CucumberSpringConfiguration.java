@@ -15,6 +15,5 @@ import org.springframework.transaction.annotation.Transactional;
         plugin = {"pretty"},
         glue = {"com.training_microservice.cucumber.TrainingServiceSteps","com.training_microservice.cucumber.TrainingConsumerSteps"}
 )
-
 public class CucumberSpringConfiguration {
 }

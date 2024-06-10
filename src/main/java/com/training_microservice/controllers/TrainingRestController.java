@@ -1,5 +1,6 @@
 package com.training_microservice.controllers;
 
+import com.training_microservice.domain.documents.TrainerSummary;
 import com.training_microservice.domain.records.TrainingRecord;
 import com.training_microservice.service.TrainingService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -42,7 +43,7 @@ public class TrainingRestController {
             schema = @Schema(type = "string"), example = "Bearer")
     @Operation(summary = "Get Training Summary by Trainer username")
     @GetMapping("/summary/trainer/{trainerUsername}")
-    public ResponseEntity<TrainingRecord.TrainerTrainingSummary> getTrainingSummaryByTrainerUsername(@PathVariable String trainerUsername){
+    public ResponseEntity<TrainerSummary> getTrainingSummaryByTrainerUsername(@PathVariable String trainerUsername){
         return trainingService.getTrainingSummaryByTrainer(trainerUsername);
     }
 

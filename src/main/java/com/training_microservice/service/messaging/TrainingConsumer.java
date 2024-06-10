@@ -1,5 +1,6 @@
 package com.training_microservice.service.messaging;
 
+import com.training_microservice.domain.documents.TrainerSummary;
 import com.training_microservice.domain.records.TrainingRecord;
 import com.training_microservice.service.TrainingService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -86,7 +87,7 @@ public class TrainingConsumer {
                 processId = "";
             }
             String trainerUsername = messageConverter.convertMessageToObject(message, String.class);
-            TrainingRecord.TrainerTrainingSummary response = trainingService.getTrainingSummaryByTrainer(trainerUsername).getBody();
+            TrainerSummary response = trainingService.getTrainingSummaryByTrainer(trainerUsername).getBody();
             if (response != null) {
                 producer.sendMessage("queue.summaryTrainer.response", response, processId);
                 log.info("Trainer summary obtained from: {}", trainerUsername);

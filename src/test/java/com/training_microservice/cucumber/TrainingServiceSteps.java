@@ -1,7 +1,8 @@
 package com.training_microservice.cucumber;
 
+import com.training_microservice.dao.TrainerSummaryRepo;
 import com.training_microservice.dao.TrainingRepo;
-import com.training_microservice.dao.TrainingRepository;
+import com.training_microservice.domain.documents.TrainerSummary;
 import com.training_microservice.domain.entities.Training;
 import com.training_microservice.domain.records.TrainingRecord;
 import com.training_microservice.mapper.TrainingMapperImpl;
@@ -22,19 +23,24 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 public class TrainingServiceSteps {
     @Mock
     private TrainingRepo trainingRepository;
+    @Mock
+    private TrainerSummaryRepo trainerSummaryRepo;
     private TrainingService trainingService;
     private TrainingRecord.TrainingRequest trainingRequest;
     private ResponseEntity response;
     private TrainingRecord.TrainingParamsRequest request;
     private Training training;
+    private TrainerSummary trainerSummary;
+
     @Before
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        trainingService = new TrainingService(new TrainingMapperImpl(), trainingRepository);
+        trainingService = new TrainingService(new TrainingMapperImpl(), trainingRepository, trainerSummaryRepo);
 
         training =  new Training();
         training.setId(1L);
@@ -45,13 +51,27 @@ public class TrainingServiceSteps {
         training.setTrainingDuration(3L);
         training.setTrainingName("Plan Three Months");
         training.setTrainingIsCompleted(false);
+        trainerSummary = new TrainerSummary();
+        trainerSummary.setTrainerUsername("trainer.username");
+        trainerSummary.setTrainerFirstName("Trainer");
+        trainerSummary.setTrainerLastName("Username");
+        trainerSummary.setTrainerStatus(true);
+
+        Map<Integer, Map<String, Long>> trainerSummaryMap = new HashMap<>();
+        Map<String, Long> monthDurationMap = new HashMap<>();
+        monthDurationMap.put("AUGUST", 3L);
+        trainerSummaryMap.put(2022, monthDurationMap);
+        trainerSummary.setSummary(trainerSummaryMap);
     }
 
     @Given("The user types a valid training request")
     public void theUserTypesAValidTrainingRequest() {
         trainingRequest = new TrainingRecord.TrainingRequest(
-                "trainee.username",
+                "Trainer",
+                "Username",
                 "trainer.username",
+                true,
+                "trainee.username",
                 "Plan Three Months",
                 LocalDate.parse("2022-08-06"),
                 3L
@@ -62,6 +82,7 @@ public class TrainingServiceSteps {
     @When("The user saves the training request")
     public void theUserSavesTheTrainingRequest() {
         Mockito.when(trainingRepository.save(any(Training.class))).thenReturn(training);
+        Mockito.when(trainerSummaryRepo.save(trainerSummary)).thenReturn(trainerSummary);
         response = trainingService.saveTraining(trainingRequest);
     }
 
@@ -75,6 +96,9 @@ public class TrainingServiceSteps {
     public void theUserTypesAnInvalidTrainingRequest() {
         trainingRequest = new TrainingRecord.TrainingRequest(
                 null,
+                null,
+                null,
+                false,
                 null,
                 null,
                 null,
@@ -137,23 +161,15 @@ public class TrainingServiceSteps {
     public void theUserRequestsHisWorkloadSummaryByTrainerUsername(String username) {
         if (username.equals("trainer.username")) {
             training.setTrainingIsCompleted(true);
-            Mockito.when(trainingRepository.findTrainingByTrainer("trainer.username")).thenReturn(Collections.singletonList(training));
+            Mockito.when(trainerSummaryRepo.findById("trainer.username")).thenReturn(Optional.ofNullable(trainerSummary));
         }
-        response = trainingService.getTrainingSummaryByTrainer("trainer.username");
+        response = trainingService.getTrainingSummaryByTrainer(username);
     }
 
     @Then("The user should receive a workload summary")
     public void theUserShouldReceiveAWorkloadSummary() {
-        Map<Integer, Map<String, Long>> summary = new HashMap<>();
-        Map<String, Long> month = new HashMap<>();
-        month.put("AUGUST",3L);
-        summary.put(2022, month);
-
-        TrainingRecord.TrainerTrainingSummary expected =new TrainingRecord.TrainerTrainingSummary(
-                summary
-        );
         assertNotNull(response);
-        assertEquals(ResponseEntity.ok().body(expected), response);
+        assertEquals(ResponseEntity.ok().body(trainerSummary), response);
     }
 
     @Given("That the user has no training records")
@@ -175,6 +191,8 @@ public class TrainingServiceSteps {
     @When("The user requests to delete the training by id")
     public void theUserRequestsToDeleteTheTrainingById() {
         Mockito.when(trainingRepository.findById(1L)).thenReturn(Optional.ofNullable(training));
+        when(trainerSummaryRepo.findById("trainer.username")).thenReturn(Optional.ofNullable(trainerSummary));
+
         response = trainingService.deleteTrainingById(1L);
     }
 
