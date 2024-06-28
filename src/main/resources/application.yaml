@@ -1,21 +1,13 @@
-#spring:
-#  application:
-#    name: training-microservice
-#  config:
-#    import: configserver:http://localhost:8888
-#    name: training-microservice
-#    activate:
-#      on-profile: default, dev
-
-
 server:
   port: ${PORT:${SERVER_PORT:8083}}
 spring:
   application:
     name: training-microservice
   profiles:
-    active: prod, activemq, mongo
+    active: prod, mongo, integration
   cloud:
+    loadbalancer:
+      enabled: false
     config:
       enabled: false
     compatibility-verifier:
